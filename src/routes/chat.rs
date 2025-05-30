@@ -23,4 +23,3 @@ pub async fn chat_handler(body: web::Json<ChatInput>) -> HttpResponse {
         })
     }
 }
-

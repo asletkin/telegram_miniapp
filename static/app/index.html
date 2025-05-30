@@ -1,216 +1,89 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Миниапп Telegram</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATOMY</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 2em;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5faff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      height: 100vh;
+      overflow: hidden;
     }
-    input[type="text"], input[type="number"] {
-      width: 80%;
-      padding: 0.5em;
+
+    .container {
+      text-align: center;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 360px;
     }
-    button {
-      padding: 0.5em 1em;
-      margin-top: 0.5em;
-    }
-    #response, #uploadResult, #guessResult {
-      margin-top: 1em;
-      font-weight: bold;
-    }
+
     img {
-      margin: 10px 0;
+      width: 120px;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin: 0;
+      color: #222;
+    }
+
+    p {
+      font-size: 1rem;
+      margin-top: 0.3rem;
+      margin-bottom: 2rem;
+      color: #666;
+    }
+
+    .button {
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      margin: 0.5rem 0;
+      border-radius: 10px;
+      width: 100%;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .button:hover {
+      background-color: #1b88e5;
+    }
+
+    .bottom-button {
+      margin-top: 2rem;
+      background-color: white;
+      color: #2196f3;
+      border: 2px solid #2196f3;
+    }
+
+    .bottom-button:hover {
+      background-color: #e6f2fd;
     }
   </style>
 </head>
 <body>
-  <h2>Добро пожаловать в мини-приложение Telegram!</h2>
-  <p>Вы вошли через Telegram WebApp</p>
+  <div class="container">
+    <!-- Замените путь ниже на реальный URL логотипа ATOMY -->
+    <img src="/static/uploads/atomy_logo.png" alt="Atomy Logo" />
+    <h1>ATOMY</h1>
+    <p>Нина</p>
 
-  <!-- Чат с ботом -->
-  <h3>Чат с ботом:</h3>
-  <input type="text" id="userInput" placeholder="Введите вопрос..." />
-  <button onclick="askBot()">Задать вопрос ИИ</button>
-  <div id="response"></div>
-
-  <hr>
-
-  <!-- Загрузка медиа -->
-  <h3>Загрузка медиа (фото или видео):</h3>
-  <form id="uploadForm" enctype="multipart/form-data">
-    <input type="file" name="media" id="mediaInput" accept="image/*,video/*" />
-    <button type="submit">Загрузить</button>
-  </form>
-  <div id="uploadResult"></div>
-
-  <hr>
-
-  <!-- Галерея и голосование -->
-  <h3>Голосование за изображения:</h3>
-  <div id="gallery"></div>
-
-  <hr>
-
-  <!-- Викторина -->
-  <h3>Викторина</h3>
-  <div id="quizArea"></div>
-
-  <hr>
-
-  <!-- Мини-игра -->
-  <h3>Мини-игра: Угадай число от 1 до 10</h3>
-  <input type="number" id="guessInput" min="1" max="10" />
-  <button onclick="playGame()">Проверить</button>
-  <div id="guessResult"></div>
-
-  <script>
-    // Чат с ботом
-    async function askBot() {
-      const input = document.getElementById("userInput").value;
-      const resEl = document.getElementById("response");
-      resEl.innerText = "Ожидание ответа от бота...";
-
-      const res = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input })
-      });
-
-      const data = await res.json();
-      resEl.innerText = data.reply || "Ответа нет";
-    }
-
-    // Загрузка медиа
-    const form = document.getElementById("uploadForm");
-    const result = document.getElementById("uploadResult");
-
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const fileInput = document.getElementById("mediaInput");
-      if (!fileInput.files.length) {
-        return alert("Выберите файл");
-      }
-
-      const formData = new FormData();
-      formData.append("media", fileInput.files[0]);
-
-      result.innerText = "Загрузка...";
-
-      const res = await fetch("/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      const text = await res.text();
-      result.innerText = text;
-
-      loadImages();
-    };
-
-    // Галерея
-    async function loadImages() {
-      const res = await fetch("/images");
-      const images = await res.json();
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-
-      images.forEach(img => {
-        const div = document.createElement("div");
-        div.innerHTML = `
-          <img src="/uploads/${img.filename}" width="200"><br>
-          <b>Голоса: ${img.votes}</b><br>
-          <button onclick="vote('${img.filename}')">Голосовать</button>
-          <hr>
-        `;
-        gallery.appendChild(div);
-      });
-    }
-
-    async function vote(filename) {
-      const res = await fetch("/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename })
-      });
-      const msg = await res.text();
-      alert(msg);
-      loadImages();
-    }
-
-    // Викторина
-    async function loadQuiz() {
-      const res = await fetch("/quiz");
-      const questions = await res.json();
-      const container = document.getElementById("quizArea");
-      container.innerHTML = "";
-
-      questions.forEach((q, i) => {
-        const div = document.createElement("div");
-        div.innerHTML = `
-          <h4>${i + 1}. ${q.question}</h4>
-          <div id="q${q.id}">
-            ${q.options.map((opt, idx) =>
-              `<button onclick="submitQuiz(${q.id}, ${idx}, this)">${opt}</button>`
-            ).join("<br>")}
-          </div>
-          <div id="r${q.id}" style="margin-top: 5px; font-weight: bold;"></div>
-          <hr>
-        `;
-        container.appendChild(div);
-
-        // Таймер
-        setTimeout(() => {
-          const area = document.getElementById(`q${q.id}`);
-          if (area && area.innerHTML.includes("button")) {
-            area.innerHTML = "<i>Время вышло!</i>";
-          }
-        }, q.time_limit_sec * 1000);
-      });
-    }
-
-    async function submitQuiz(id, answerIdx, btn) {
-      const res = await fetch("/quiz/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, answer: answerIdx })
-      });
-      const result = await res.json();
-      const div = document.getElementById(`r${id}`);
-      if (result.correct) {
-        div.innerText = "✅ Правильно!";
-      } else {
-        div.innerText = `❌ Неправильно. Правильный ответ: ${result.correct_answer + 1}`;
-      }
-
-      const buttons = document.getElementById(`q${id}`).querySelectorAll("button");
-      buttons.forEach(btn => btn.disabled = true);
-    }
-
-    // Мини-игра
-    async function playGame() {
-      const num = parseInt(document.getElementById("guessInput").value);
-      if (!num || num < 1 || num > 10) {
-        alert("Введите число от 1 до 10");
-        return;
-      }
-
-      const res = await fetch("/game/guess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ number: num })
-      });
-
-      const data = await res.json();
-      document.getElementById("guessResult").innerText = data.message;
-    }
-
-    // Инициализация
-    loadImages();
-    loadQuiz();
-  </script>
+    <button class="button" onclick="location.href='/upload'">Загрузить медиа</button>
+    <button class="button" onclick="location.href='/voting'">Проголосовать</button>
+    <button class="button bottom-button" onclick="location.href='/chat'">Новый чат</button>
+  </div>
 </body>
 </html>
 

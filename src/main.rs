@@ -1,6 +1,7 @@
-use actix_files::Files;
+use actix_files::{Files, NamedFile};
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use dotenv::dotenv;
+//use std::path::PathBuf;
 
 mod openai;
 mod telegram {
@@ -11,12 +12,9 @@ mod routes {
     pub mod chat;
     pub mod media;
     pub mod voting;
-    pub mod quiz;
-    pub mod games;
 }
 
 mod state;
-
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -45,6 +43,21 @@ async fn telegram_webhook(body: web::Json<telegram::api::TelegramMessage>) -> Ht
     HttpResponse::Ok().finish()
 }
 
+#[get("/chat")]
+async fn chat_page() -> actix_web::Result<NamedFile> {
+    Ok(NamedFile::open("./static/app/chat.html")?)
+}
+
+#[get("/upload")]
+async fn upload_page() -> actix_web::Result<NamedFile> {
+    Ok(NamedFile::open("./static/app/upload.html")?)
+}
+
+#[get("/voting")]
+async fn voting_page() -> actix_web::Result<NamedFile> {
+    Ok(NamedFile::open("./static/app/voting.html")?)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -56,19 +69,17 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(index)
             .service(telegram_webhook)
+            .service(chat_page)
+            .service(upload_page)
+            .service(voting_page)
             .service(Files::new("/app", "./static/app").index_file("index.html"))
-            .service(Files::new("/uploads", "./static/uploads").show_files_listing()) // ⬅️ добавлено
             .service(routes::chat::chat_handler)
             .service(routes::media::upload)
             .service(routes::voting::list_images)
             .service(routes::voting::vote_image)
-            .service(routes::quiz::get_quiz)
-            .service(routes::quiz::submit_quiz)
-            .service(routes::games::guess_number)
     })
     .bind(("0.0.0.0", 3000))?
     .run()
     .await
 }
-
 

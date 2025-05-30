@@ -1,6 +1,6 @@
 use actix_web::{get, post, web, HttpResponse};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+//use std::collections::HashMap;
 
 #[derive(Serialize)]
 pub struct QuizQuestion {
