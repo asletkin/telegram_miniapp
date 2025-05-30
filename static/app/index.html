@@ -9,7 +9,7 @@
       font-family: sans-serif;
       margin: 2em;
     }
-    input[type="text"] {
+    input[type="text"], input[type="number"] {
       width: 80%;
       padding: 0.5em;
     }
@@ -17,7 +17,7 @@
       padding: 0.5em 1em;
       margin-top: 0.5em;
     }
-    #response, #uploadResult {
+    #response, #uploadResult, #guessResult {
       margin-top: 1em;
       font-weight: bold;
     }
@@ -30,7 +30,7 @@
   <h2>Добро пожаловать в мини-приложение Telegram!</h2>
   <p>Вы вошли через Telegram WebApp</p>
 
-  <!-- Чат с ИИ -->
+  <!-- Чат с ботом -->
   <h3>Чат с ботом:</h3>
   <input type="text" id="userInput" placeholder="Введите вопрос..." />
   <button onclick="askBot()">Задать вопрос ИИ</button>
@@ -58,8 +58,16 @@
   <h3>Викторина</h3>
   <div id="quizArea"></div>
 
+  <hr>
+
+  <!-- Мини-игра -->
+  <h3>Мини-игра: Угадай число от 1 до 10</h3>
+  <input type="number" id="guessInput" min="1" max="10" />
+  <button onclick="playGame()">Проверить</button>
+  <div id="guessResult"></div>
+
   <script>
-    // Чат с ИИ
+    // Чат с ботом
     async function askBot() {
       const input = document.getElementById("userInput").value;
       const resEl = document.getElementById("response");
@@ -67,9 +75,7 @@
 
       const res = await fetch("/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input })
       });
 
@@ -101,11 +107,10 @@
       const text = await res.text();
       result.innerText = text;
 
-      // После загрузки обновим галерею
       loadImages();
     };
 
-    // Голосование
+    // Галерея
     async function loadImages() {
       const res = await fetch("/images");
       const images = await res.json();
@@ -180,9 +185,26 @@
         div.innerText = `❌ Неправильно. Правильный ответ: ${result.correct_answer + 1}`;
       }
 
-      // Заблокировать кнопки
       const buttons = document.getElementById(`q${id}`).querySelectorAll("button");
       buttons.forEach(btn => btn.disabled = true);
+    }
+
+    // Мини-игра
+    async function playGame() {
+      const num = parseInt(document.getElementById("guessInput").value);
+      if (!num || num < 1 || num > 10) {
+        alert("Введите число от 1 до 10");
+        return;
+      }
+
+      const res = await fetch("/game/guess", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number: num })
+      });
+
+      const data = await res.json();
+      document.getElementById("guessResult").innerText = data.message;
     }
 
     // Инициализация

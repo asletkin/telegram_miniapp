@@ -12,6 +12,7 @@ mod routes {
     pub mod media;
     pub mod voting;
     pub mod quiz;
+    pub mod games;
 }
 
 mod state;
@@ -63,6 +64,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::voting::vote_image)
             .service(routes::quiz::get_quiz)
             .service(routes::quiz::submit_quiz)
+            .service(routes::games::guess_number)
     })
     .bind(("0.0.0.0", 3000))?
     .run()
