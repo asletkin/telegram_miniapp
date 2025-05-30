@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Миниапп Telegram</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2em;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 0.5em;
+    }
+    button {
+      padding: 0.5em 1em;
+      margin-top: 0.5em;
+    }
+    #response, #uploadResult {
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Добро пожаловать в мини-приложение Telegram!</h2>
+  <p>Вы вошли через Telegram WebApp</p>
+
+  <!-- Чат с ИИ -->
+  <h3>Чат с ботом:</h3>
+  <input type="text" id="userInput" placeholder="Введите вопрос..." />
+  <button onclick="askBot()">Задать вопрос ИИ</button>
+  <div id="response"></div>
+
+  <hr>
+
+  <!-- Загрузка медиа -->
+  <h3>Загрузка медиа (фото или видео):</h3>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="media" id="mediaInput" accept="image/*,video/*" />
+    <button type="submit">Загрузить</button>
+  </form>
+  <div id="uploadResult"></div>
+
+  <script>
+    async function askBot() {
+      const input = document.getElementById("userInput").value;
+      const resEl = document.getElementById("response");
+      resEl.innerText = "Ожидание ответа от бота...";
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: input })
+      });
+
+      const data = await res.json();
+      resEl.innerText = data.reply || "Ответа нет";
+    }
+
+    const form = document.getElementById("uploadForm");
+    const result = document.getElementById("uploadResult");
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById("mediaInput");
+      if (!fileInput.files.length) {
+        return alert("Выберите файл");
+      }
+
+      const formData = new FormData();
+      formData.append("media", fileInput.files[0]);
+
+      result.innerText = "Загрузка...";
+
+      const res = await fetch("/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const text = await res.text();
+      result.innerText = text;
+    };
+  </script>
+</body>
+</html>
+
+
+

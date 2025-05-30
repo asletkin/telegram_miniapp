@@ -1,0 +1,26 @@
+[package]
+name = "telegram_miniapp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = "4"
+actix-files = "0.6"
+actix-multipart = "0.6"
+tokio = { version = "1", features = ["fs", "rt-multi-thread", "macros"] }
+# Для HTTP-запросов
+reqwest = { version = "0.11", features = ["json", "multipart", "rustls-tls"] }
+
+# Для сериализации
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Для работы с переменными окружения
+dotenv = "0.15"
+
+# Логирование (удобно отлаживать)
+log = "0.4"
+env_logger = "0.10"
+futures-util = "0.3"
+uuid = { version = "1", features = ["v4"] }
+mime_guess = "2.0"
