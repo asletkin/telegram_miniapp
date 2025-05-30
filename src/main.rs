@@ -11,9 +11,11 @@ mod routes {
     pub mod chat;
     pub mod media;
     pub mod voting;
+    pub mod quiz;
 }
 
 mod state;
+
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -59,6 +61,8 @@ async fn main() -> std::io::Result<()> {
             .service(routes::media::upload)
             .service(routes::voting::list_images)
             .service(routes::voting::vote_image)
+            .service(routes::quiz::get_quiz)
+            .service(routes::quiz::submit_quiz)
     })
     .bind(("0.0.0.0", 3000))?
     .run()
