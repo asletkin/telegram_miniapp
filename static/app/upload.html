@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Загрузка медиа</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background-color: #f4f9fc;
+      color: #333;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background-color: #0088cc;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    header span {
+      margin-left: 10px;
+    }
+    main {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    label.custom-file-upload {
+      display: block;
+      padding: 12px;
+      background-color: #34b7f1;
+      color: white;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    button {
+      padding: 12px;
+      background-color: #1c80d9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 8px; /* отступ между кнопками */
+    }
+    #result {
+      text-align: center;
+      font-weight: bold;
+      color: #28a745;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <header onclick="goBack()">
+    ← <span>Загрузка медиа</span>
+  </header>
+
+  <main>
+    <div class="card">
+      <form id="uploadForm" enctype="multipart/form-data">
+        <label for="mediaInput" class="custom-file-upload">
+          Выберите изображение или видео
+        </label>
+        <input type="file" id="mediaInput" name="media" accept="image/*,video/*" />
+        <button type="submit">Загрузить</button>
+      </form>
+      <div id="result"></div>
+    </div>
+  </main>
+
+  <script>
+    function goBack() {
+      window.location.href = "/app/index.html";
+    }
+
+    const form = document.getElementById("uploadForm");
+    const result = document.getElementById("result");
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById("mediaInput");
+      if (!fileInput.files.length) {
+        return alert("Выберите файл");
+      }
+
+      const formData = new FormData();
+      formData.append("media", fileInput.files[0]);
+
+      result.textContent = "Загрузка...";
+
+      try {
+        const res = await fetch("/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        if (res.ok) {
+          result.textContent = "Файл загружен!";
+        } else {
+          result.textContent = "Ошибка при загрузке";
+        }
+      } catch (error) {
+        result.textContent = "Ошибка сети";
+      }
+    };
+  </script>
+
+</body>
+</html>
+

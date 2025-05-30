@@ -14,6 +14,23 @@
       background-color: #f2f3f5;
     }
 
+    .header {
+      background-color: #0088cc;
+      color: white;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    .back-button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
     .chat {
       flex: 1;
       padding: 10px;
@@ -67,6 +84,11 @@
   </style>
 </head>
 <body>
+  <div class="header">
+    <button class="back-button" onclick="goBack()">←</button>
+    <div>Меню</div>
+  </div>
+
   <div class="chat" id="chat"></div>
 
   <div class="input-area">
@@ -75,6 +97,10 @@
   </div>
 
   <script>
+    function goBack() {
+      window.location.href = "/app/index.html";
+    }
+
     async function sendMessage() {
       const inputEl = document.getElementById("userInput");
       const text = inputEl.value.trim();
