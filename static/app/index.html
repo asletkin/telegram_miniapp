@@ -21,6 +21,9 @@
       margin-top: 1em;
       font-weight: bold;
     }
+    img {
+      margin: 10px 0;
+    }
   </style>
 </head>
 <body>
@@ -42,6 +45,12 @@
     <button type="submit">Загрузить</button>
   </form>
   <div id="uploadResult"></div>
+
+  <hr>
+
+  <!-- Галерея и голосование -->
+  <h3>Голосование за изображения:</h3>
+  <div id="gallery"></div>
 
   <script>
     async function askBot() {
@@ -83,10 +92,43 @@
 
       const text = await res.text();
       result.innerText = text;
+
+      // После загрузки обновим галерею
+      loadImages();
     };
+
+    async function loadImages() {
+      const res = await fetch("/images");
+      const images = await res.json();
+      const gallery = document.getElementById("gallery");
+      gallery.innerHTML = "";
+
+      images.forEach(img => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <img src="/uploads/${img.filename}" width="200"><br>
+          <b>Голоса: ${img.votes}</b><br>
+          <button onclick="vote('${img.filename}')">Голосовать</button>
+          <hr>
+        `;
+        gallery.appendChild(div);
+      });
+    }
+
+    async function vote(filename) {
+      const res = await fetch("/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename })
+      });
+      const msg = await res.text();
+      alert(msg);
+      loadImages();
+    }
+
+    loadImages();
   </script>
 </body>
 </html>
-
 
 

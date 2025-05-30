@@ -1793,6 +1793,7 @@ dependencies = [
  "futures-util",
  "log",
  "mime_guess",
+ "once_cell",
  "reqwest",
  "serde",
  "serde_json",

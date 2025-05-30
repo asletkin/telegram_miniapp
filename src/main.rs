@@ -10,7 +10,10 @@ mod telegram {
 mod routes {
     pub mod chat;
     pub mod media;
+    pub mod voting;
 }
+
+mod state;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -39,7 +42,6 @@ async fn telegram_webhook(body: web::Json<telegram::api::TelegramMessage>) -> Ht
     HttpResponse::Ok().finish()
 }
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -52,9 +54,11 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(telegram_webhook)
             .service(Files::new("/app", "./static/app").index_file("index.html"))
-            .service(routes::chat::chat_handler)
+            .service(Files::new("/uploads", "./static/uploads").show_files_listing()) // ⬅️ добавлено
             .service(routes::chat::chat_handler)
             .service(routes::media::upload)
+            .service(routes::voting::list_images)
+            .service(routes::voting::vote_image)
     })
     .bind(("0.0.0.0", 3000))?
     .run()
