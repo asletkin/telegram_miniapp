@@ -1,189 +1,26 @@
-<!-- static/app/chat.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Чат с ботом</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Telegram MiniApp</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>Telegram.WebApp.expand();</script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      background-color: #f3f4f6;
-      padding-top: env(safe-area-inset-top);
-    }
-
-    #form {
-      position: fixed;
-      bottom: env(safe-area-inset-bottom, 0);
-      left: 0;
-      right: 0;
-      background: white;
-      padding: 0.5rem;
-      border-top: 1px solid #e5e7eb;
-      z-index: 10;
-    }
-
-    #chat {
-      padding-bottom: 80px;
-    }
-
-    .typing-dots::after {
-      content: '';
-      display: inline-block;
-      width: 1em;
-      animation: dots 1.5s steps(3, end) infinite;
-    }
-
-    @keyframes dots {
-      0% { content: ''; }
-      33% { content: '.'; }
-      66% { content: '..'; }
-      100% { content: '...'; }
-    }
-
-    .spinner {
-      width: 1rem;
-      height: 1rem;
-      border: 2px solid #ccc;
-      border-top-color: #3490dc;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-      margin-right: 0.5rem;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-<body class="flex flex-col h-screen overflow-hidden">
-  <div class="flex items-center px-4 py-3 bg-blue-700 text-white text-lg font-semibold">
-    <button onclick="history.back()" class="mr-3">←</button>
-    Чат с ботом
-  </div>
-  <div id="chat" class="flex-1 overflow-y-auto px-4 py-2 space-y-2"></div>
-  <form id="form" class="flex items-center space-x-2">
-    <input id="fileInput" type="file" accept="image/*,audio/*" class="hidden" />
-    <button type="button" id="attachBtn" class="p-2 bg-gray-200 rounded-lg hover:bg-gray-300" title="Прикрепить файл">📎</button>
-    <input id="message" type="text" class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none" placeholder="Введите сообщение..." autocomplete="off" />
-    <button type="submit" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-      </svg>
-    </button>
-  </form>
   <script>
-    const chat = document.getElementById("chat");
-    const form = document.getElementById("form");
-    const input = document.getElementById("message");
-    const fileInput = document.getElementById("fileInput");
-    const attachBtn = document.getElementById("attachBtn");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
-
-      const msgEl = appendMessage("Вы", text + " ⏳", "right");
-      input.value = "";
-      input.focus();
-
-      const typingEl = appendTyping();
-
-      try {
-        const res = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
-        });
-
-        let reply;
-        try {
-          const data = await res.json();
-          reply = data.reply ?? JSON.stringify(data);
-        } catch (_) {
-          reply = await res.text();
-        }
-
-        typingEl.remove();
-        msgEl.innerHTML = `<strong>Вы:</strong><br/>${text} ✅`;
-        appendMessage("Бот", reply, "left");
-
-      } catch (err) {
-        typingEl.remove();
-        msgEl.innerHTML = `<strong>Вы:</strong><br/>${text} ❌`;
-        appendMessage("Ошибка", "Не удалось отправить", "left");
-      }
-    });
-
-    attachBtn.addEventListener("click", () => fileInput.click());
-
-    fileInput.addEventListener("change", () => {
-      if (fileInput.files[0]) sendFile(fileInput.files[0]);
-    });
-
-    input.addEventListener("paste", (event) => {
-      const items = event.clipboardData.items;
-      for (let item of items) {
-        if (item.type.indexOf("image") !== -1) {
-          const file = item.getAsFile();
-          if (file) {
-            sendFile(file);
-            event.preventDefault();
-          }
-        }
-      }
-    });
-
-    async function sendFile(file) {
-      const msgEl = appendMessage("Вы", `📎 ${file.name} ⏳`, "right");
-      const typingEl = appendTyping();
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await fetch("/chat", {
-          method: "POST",
-          body: formData
-        });
-
-        const reply = await res.text();
-        msgEl.innerHTML = `<strong>Вы:</strong><br/>📎 ${file.name} ✅`;
-        typingEl.remove();
-        appendMessage("Бот", reply, "left");
-      } catch (err) {
-        msgEl.innerHTML = `<strong>Вы:</strong><br/>📎 ${file.name} ❌`;
-        typingEl.remove();
-        appendMessage("Ошибка", "Не удалось отправить файл", "left");
-      }
-    }
-
-    function appendMessage(author, text, side = "left") {
-      const div = document.createElement("div");
-      div.className = `max-w-[80%] px-4 py-2 rounded-lg whitespace-pre-wrap break-words ${
-        side === "right" ? "bg-blue-100 self-end" : "bg-white self-start"
-      } shadow`;
-      div.innerHTML = `<strong>${author}:</strong><br/>${text}`;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-      return div;
-    }
-
-    function appendTyping() {
-      const div = document.createElement("div");
-      div.className = "max-w-[80%] px-4 py-2 rounded-lg bg-white self-start shadow flex items-center";
-      div.innerHTML = `<span class="spinner"></span><span><strong>Бот:</strong> <span class="typing-dots"></span></span>`;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-      return div;
-    }
+    Telegram.WebApp.expand();
   </script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 space-y-4 text-center">
+  <h1 class="text-2xl font-bold text-blue-700 mt-4">Добро пожаловать!</h1>
+  <p class="text-gray-700">Выберите действие:</p>
+
+  <div class="flex flex-col space-y-3 w-full max-w-xs mt-6">
+    <a href="/chat" class="bg-blue-600 text-white py-3 px-6 rounded-lg shadow hover:bg-blue-700 transition">💬 Чат с ботом</a>
+    <a href="/upload" class="bg-green-600 text-white py-3 px-6 rounded-lg shadow hover:bg-green-700 transition">📤 Загрузка медиа</a>
+    <a href="/voting" class="bg-purple-600 text-white py-3 px-6 rounded-lg shadow hover:bg-purple-700 transition">🗳 Голосование</a>
+  </div>
+
+  <footer class="mt-auto text-sm text-gray-500">@SletkinAA_bot</footer>
 </body>
 </html>
 
