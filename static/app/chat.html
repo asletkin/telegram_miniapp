@@ -5,25 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Чат с ботом</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    Telegram.WebApp.expand();
-  </script>
+  <script>Telegram.WebApp.expand();</script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     html, body {
       height: 100%;
       margin: 0;
-      padding-bottom: env(safe-area-inset-bottom);
+      background-color: #f3f4f6;
+      padding-top: env(safe-area-inset-top);
     }
 
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-      .keyboard-safe {
-        padding-bottom: env(safe-area-inset-bottom);
-      }
+    #form {
+      position: fixed;
+      bottom: env(safe-area-inset-bottom, 0);
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 0.5rem;
+      border-top: 1px solid #e5e7eb;
+      z-index: 10;
+    }
+
+    #chat {
+      padding-bottom: 70px;
     }
   </style>
 </head>
-<body class="bg-gray-100 flex flex-col h-screen">
+<body class="flex flex-col h-screen overflow-hidden">
 
   <!-- Верхняя панель -->
   <div class="flex items-center px-4 py-3 bg-blue-700 text-white text-lg font-semibold">
@@ -33,20 +41,25 @@
 
   <!-- Контент чата -->
   <div id="chat" class="flex-1 overflow-y-auto px-4 py-2 space-y-2">
-    <!-- Сообщения будут добавляться сюда -->
+    <!-- Сообщения появятся здесь -->
   </div>
 
   <!-- Форма ввода -->
-  <form id="form" class="flex items-center p-2 bg-white border-t border-gray-300 keyboard-safe">
+  <form id="form" class="flex items-center">
     <input
       id="message"
       type="text"
       class="flex-1 p-2 border border-gray-300 rounded-lg mr-2 focus:outline-none"
       placeholder="Введите сообщение..."
       autocomplete="off"
+      autocapitalize="none"
+      autocorrect="off"
     />
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-      Отправить
+    <button type="submit" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center">
+      <!-- Иконка стрелки вверх -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
     </button>
   </form>
 
@@ -56,6 +69,18 @@
     const form = document.getElementById("form");
     const input = document.getElementById("message");
 
+    let activated = false;
+
+    window.addEventListener("touchstart", () => {
+      if (!activated) {
+        activated = true;
+        setTimeout(() => {
+          input.focus();
+          input.scrollIntoView({ behavior: "smooth", block: "end" });
+        }, 100);
+      }
+    }, { once: true });
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = input.value.trim();
@@ -63,23 +88,36 @@
 
       appendMessage("Вы", text, "right");
       input.value = "";
+      input.focus();
+
       try {
         const res = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text })
         });
-        const reply = await res.text();
+
+        let reply;
+        try {
+          const data = await res.json();
+          reply = data.reply ?? JSON.stringify(data);
+        } catch (_) {
+          reply = await res.text();
+        }
+
         appendMessage("Бот", reply, "left");
       } catch (err) {
-        appendMessage("Ошибка", "Не удалось получить ответ от бота", "left");
+        appendMessage("Ошибка", "Не удалось получить ответ", "left");
         console.error(err);
       }
     });
 
     function appendMessage(author, text, side = "left") {
       const div = document.createElement("div");
-      div.className = `max-w-[80%] px-4 py-2 rounded-lg ${side === "right" ? "bg-blue-100 self-end" : "bg-white self-start"} shadow`;
+      div.className = `max-w-[80%] px-4 py-2 rounded-lg whitespace-pre-wrap break-words ${
+        side === "right" ? "bg-blue-100 self-end" : "bg-white self-start"
+      } shadow`;
+
       div.innerHTML = `<strong>${author}:</strong><br/>${text}`;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
