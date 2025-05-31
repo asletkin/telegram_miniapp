@@ -2,129 +2,86 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Чат с ботом</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    Telegram.WebApp.expand();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      background-color: #f2f3f5;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
-    .header {
-      background-color: #0088cc;
-      color: white;
-      padding: 12px;
-      display: flex;
-      align-items: center;
-    }
-
-    .back-button {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      margin-right: 10px;
-    }
-
-    .chat {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message {
-      background-color: white;
-      padding: 10px 15px;
-      border-radius: 18px;
-      max-width: 80%;
-      margin: 5px;
-      align-self: flex-end;
-      word-wrap: break-word;
-    }
-
-    .bot {
-      background-color: #e4e6eb;
-      align-self: flex-start;
-    }
-
-    .input-area {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid #ccc;
-      background: white;
-    }
-
-    .input-area input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 20px;
-      outline: none;
-    }
-
-    .input-area button {
-      background-color: #0088cc;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      margin-left: 10px;
-      cursor: pointer;
-      font-size: 18px;
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .keyboard-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
     }
   </style>
 </head>
-<body>
-  <div class="header">
-    <button class="back-button" onclick="goBack()">←</button>
-    <div>Меню</div>
+<body class="bg-gray-100 flex flex-col h-screen">
+
+  <!-- Верхняя панель -->
+  <div class="flex items-center px-4 py-3 bg-blue-700 text-white text-lg font-semibold">
+    <button onclick="history.back()" class="mr-3">←</button>
+    Чат с ботом
   </div>
 
-  <div class="chat" id="chat"></div>
-
-  <div class="input-area">
-    <input type="text" id="userInput" placeholder="Введите сообщение..." />
-    <button onclick="sendMessage()">➤</button>
+  <!-- Контент чата -->
+  <div id="chat" class="flex-1 overflow-y-auto px-4 py-2 space-y-2">
+    <!-- Сообщения будут добавляться сюда -->
   </div>
+
+  <!-- Форма ввода -->
+  <form id="form" class="flex items-center p-2 bg-white border-t border-gray-300 keyboard-safe">
+    <input
+      id="message"
+      type="text"
+      class="flex-1 p-2 border border-gray-300 rounded-lg mr-2 focus:outline-none"
+      placeholder="Введите сообщение..."
+      autocomplete="off"
+    />
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      Отправить
+    </button>
+  </form>
 
   <script>
-    function goBack() {
-      window.location.href = "/app/index.html";
-    }
+    const tg = Telegram.WebApp;
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("message");
 
-    async function sendMessage() {
-      const inputEl = document.getElementById("userInput");
-      const text = inputEl.value.trim();
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
       if (!text) return;
 
-      appendMessage(text, "user");
-      inputEl.value = "";
+      appendMessage("Вы", text, "right");
+      input.value = "";
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        });
+        const reply = await res.text();
+        appendMessage("Бот", reply, "left");
+      } catch (err) {
+        appendMessage("Ошибка", "Не удалось получить ответ от бота", "left");
+        console.error(err);
+      }
+    });
 
-      const res = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      });
-
-      const data = await res.json();
-      appendMessage(data.reply || "Ошибка ответа", "bot");
-    }
-
-    function appendMessage(text, type) {
-      const chat = document.getElementById("chat");
-      const msg = document.createElement("div");
-      msg.className = "message" + (type === "bot" ? " bot" : "");
-      msg.innerText = text;
-      chat.appendChild(msg);
+    function appendMessage(author, text, side = "left") {
+      const div = document.createElement("div");
+      div.className = `max-w-[80%] px-4 py-2 rounded-lg ${side === "right" ? "bg-blue-100 self-end" : "bg-white self-start"} shadow`;
+      div.innerHTML = `<strong>${author}:</strong><br/>${text}`;
+      chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
   </script>

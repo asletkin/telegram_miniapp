@@ -6,8 +6,7 @@
   <title>Загрузка медиа</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    // Объявляем один раз глобально
-    window.tg = window.Telegram.WebApp;
+    const tg = window.Telegram.WebApp;
     tg.expand();
   </script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -42,7 +41,7 @@
   </div>
 
   <script>
-    // Используем уже объявленный window.tg
+    const tg = window.Telegram.WebApp;
     const fileInput = document.getElementById('fileInput');
     const uploadBtn = document.getElementById('uploadBtn');
 
@@ -51,7 +50,6 @@
     fileInput.addEventListener('change', () => {
       selectedFile = fileInput.files[0];
       if (selectedFile) {
-        console.log('✅ Файл выбран:', selectedFile.name);
         fileInput.previousElementSibling.textContent = `Выбран: ${selectedFile.name}`;
       } else {
         fileInput.previousElementSibling.textContent = 'Выбрать файл';
@@ -61,14 +59,11 @@
     uploadBtn.addEventListener('click', async () => {
       if (!selectedFile) {
         tg.showAlert('Сначала выберите файл');
-        console.warn('⚠️ Попытка загрузки без выбора файла');
         return;
       }
 
       const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      console.log('📤 Отправка файла:', selectedFile.name);
+      formData.append('file', selectedFile); // имя должно быть "file"
 
       try {
         const res = await fetch('/upload', {
@@ -77,11 +72,11 @@
         });
 
         const text = await res.text();
-        console.log('📥 Ответ сервера:', text);
+        console.log('Ответ:', text);
         tg.showAlert(text);
       } catch (err) {
-        console.error('❌ Ошибка загрузки:', err);
-        tg.showAlert('Ошибка при загрузке файла');
+        tg.showAlert('Ошибка при загрузке');
+        console.error('Ошибка загрузки:', err);
       }
     });
   </script>

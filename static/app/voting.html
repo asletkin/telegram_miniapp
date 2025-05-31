@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Голосование</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    Telegram.WebApp.expand();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Верхняя панель -->
+  <div class="flex items-center px-4 py-3 bg-blue-700 text-white text-lg font-semibold">
+    <button onclick="history.back()" class="mr-3">←</button>
+    Голосование
+  </div>
+
+  <!-- Галерея -->
+  <div class="flex-grow flex flex-col items-center p-4">
+    <div id="gallery" class="w-full max-w-md space-y-4"></div>
+    <footer class="mt-6 text-sm text-gray-600 text-center">
+      @SletkinAA_bot
+    </footer>
+  </div>
+
+  <script>
+    async function loadImages() {
+      try {
+        const res = await fetch("/images");
+        const images = await res.json();
+        const gallery = document.getElementById("gallery");
+        gallery.innerHTML = "";
+
+        images.forEach(img => {
+          const card = document.createElement("div");
+          card.className = "bg-white p-4 rounded-xl shadow text-center";
+
+          card.innerHTML = `
+            <img src="/uploads/${img.filename}" alt="image" class="rounded-lg max-w-full mb-2" />
+            <p class="font-semibold text-gray-700 mb-1">Голоса: ${img.votes}</p>
+            <button onclick="vote('${img.filename}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+              Голосовать
+            </button>
+          `;
+          gallery.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Ошибка при загрузке изображений:", err);
+        document.getElementById("gallery").innerHTML = "<p class='text-center text-red-600'>Не удалось загрузить изображения.</p>";
+      }
+    }
+
+    async function vote(filename) {
+      try {
+        const res = await fetch("/vote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename })
+        });
+        const msg = await res.text();
+        Telegram.WebApp.showAlert(msg);
+        loadImages();
+      } catch (err) {
+        console.error("Ошибка голосования:", err);
+      }
+    }
+
+    loadImages();
+  </script>
+</body>
+</html>
+

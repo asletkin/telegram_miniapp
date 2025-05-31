@@ -73,6 +73,7 @@ async fn main() -> std::io::Result<()> {
             .service(upload_page)
             .service(voting_page)
             .service(Files::new("/app", "./static/app").index_file("index.html"))
+            .service(Files::new("/uploads", "./static/uploads").show_files_listing()) // 👈 ОБЯЗАТЕЛЬНО
             .service(routes::chat::chat_handler)
             .service(routes::media::upload)
             .service(routes::voting::list_images)
