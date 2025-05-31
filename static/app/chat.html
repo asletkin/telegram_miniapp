@@ -70,6 +70,58 @@
   </div>
   <div id="chat" class="flex-1 overflow-y-auto px-4 py-2 space-y-2"></div>
 
-  <!-- форма и JS скрипты были внутри, ты уже их получил, могу отдельно выслать снова -->
+  <div id="chat" class="flex-1 overflow-y-auto px-4 py-2 space-y-2">
+    <!-- Сообщения будут добавляться сюда! -->
+  </div>
+
+  <!-- Форма ввода -->
+  <form id="form" class="flex items-center p-2 bg-white border-t border-gray-300 keyboard-safe">
+    <input
+      id="message"
+      type="text"
+      class="flex-1 p-2 border border-gray-300 rounded-lg mr-2 focus:outline-none"
+      placeholder="Введите сообщение..."
+      autocomplete="off"
+    />
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      Отправить
+    </button>
+  </form>
+
+  <script>
+    const tg = Telegram.WebApp;
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("message");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage("Вы", text, "right");
+      input.value = "";
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        });
+        const reply = await res.text();
+        appendMessage("Бот", reply, "left");
+      } catch (err) {
+        appendMessage("Ошибка", "Не удалось получить ответ от бота", "left");
+        console.error(err);
+      }
+    });
+
+    function appendMessage(author, text, side = "left") {
+      const div = document.createElement("div");
+      div.className = `max-w-[80%] px-4 py-2 rounded-lg ${side === "right" ? "bg-blue-100 self-end" : "bg-white self-start"} shadow`;
+      div.innerHTML = `<strong>${author}:</strong><br/>${text}`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
 </body>
 </html>
